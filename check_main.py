@@ -4,6 +4,7 @@ import requests
 import openpyxl
 import menu_upload
 import csv
+import sqlite3
 
 def check():
     ### проверка по списку самозанятых
@@ -77,6 +78,25 @@ def check():
                 else:
                     response_disqual = 'Отсутствует в списке дисквалифицированных лиц'
         return response_disqual
+    #проверка по списку паспортов в БД
+    def passport():
+        try:
+            sqlite_connection = sqlite3.connect('/home/semenenko/Загрузки/passportDB.db')
+            cursor_obj = sqlite_connection.cursor()
+            cursor_obj.execute('SELECT * FROM list_of_expired_passports WHERE PASSP_SERIES = '+str(menu_upload.lst_ank[7])+' and PASSP_NUMBER = '+str(menu_upload.lst_ank[8]))
+            record = cursor_obj.fetchall()
+            if len(record) != 0:
+                passport_response = "Найден в списке недействительных паспортов"
+            else:
+                passport_response = 'В списке недействительных паспортов не найден'
+            cursor_obj.close()
+        except sqlite3.Error as error:
+            print("Ошибка при подключении к sqlite", error)
+        finally:
+            if (sqlite_connection):
+                sqlite_connection.close()
+        return passport_response
+    
     #собираем проверенные данные
     global response_check
     response_check = []
@@ -101,4 +121,7 @@ def check():
     #проверка по списку Кандидатов
     response_disqual = disqualed()
     response_check.append(response_disqual)
+    #проверка по списку паспортов
+    passport_response = passport()
+    response_check.append(passport_response)
     return response_check

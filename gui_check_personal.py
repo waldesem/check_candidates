@@ -39,24 +39,24 @@ def create_widgets():
 
     #виджеты результатов проверки
     txt2 = ['Проверка статуса самозанятого', 'Проверка ИНН', 'Проверка по списку кандидатов',
-            'Проверка по списку дисквалифицированных лиц']
+            'Проверка по списку дисквалифиции', 'Проверка паспорта']
     #создаем первую колонку с полями на вкладкке проверки
     for l in range (len(txt2)):
         tk.Label(tab_check, text=f"{txt2[l]}", font=('Arial', 10), width=40, anchor='w', 
                 padx=8, pady=5).grid(sticky="w", column=0, row=l)
 
+#клик по  кнопке "О программе"
 def about_me():
     small_window = tk.Tk()
     small_window.title('О программе')
     small_window.geometry('420x240')
-    tk.Label(small_window, text='Программа проверки кандидатов', font=('Arial', 10), pady=5).pack()
-    tk.Label(small_window, text='Используются открытые данные органов власти', font=('Arial', 10), pady=5).pack()
-    tk.Label(small_window, text='Также используются внутренние источники', font=('Arial', 10), pady=5).pack()
-    tk.Label(small_window, text='Автор: wsemenenko@gmail.com', font=('Arial', 10), pady=5).pack()
-    tk.Label(small_window, text='https://github.com/waldesem', font=('Arial', 10), pady=5).pack()
-    tk.Label(small_window, text='GNU General Public License, version 3', font=('Arial', 10), pady=5).pack()
+    about_lst = ['Программа проверки кандидатов', 'Используются открытые данные органов власти', 
+                'Также используются внутренние источники', 'Автор: wsemenenko@gmail.com', 
+                'https://github.com/waldesem', 'GNU General Public License, version 3']
+    for i in range (len(about_lst)):
+        tk.Label(small_window, text=f'{about_lst[i]}', font=('Arial', 10), pady=5).pack()
 
-if __name__ == "__main__":   
+if __name__ == "__main__":
     #конфигурация окна
     window = tk.Tk()
     window.title('Проверка кандидата на работу в Банк')
