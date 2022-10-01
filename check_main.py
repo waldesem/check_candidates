@@ -1,10 +1,5 @@
-import httpx
-import datetime as dt
-import requests
-import openpyxl
+import httpx, openpyxl, csv, sqlite3, datetime as dt
 import menu_upload
-import csv
-import sqlite3
 
 def check():
     ### проверка по списку самозанятых
@@ -35,7 +30,7 @@ def check():
             "captcha": "",
             "captchaToken": "",
         }
-        resp = requests.post(url=url, data=data)
+        resp = httpx.post(url=url, data=data)
         resp.raise_for_status()
         return resp.json()
 
@@ -114,6 +109,7 @@ def check():
         docnumber=menu_upload.lst_ank[7][:2]+' '+menu_upload.lst_ank[7][2:]+' '+menu_upload.lst_ank[8],
         docdate=menu_upload.lst_ank[9],
     )
+#if __name__ == "__main__":
     response_check.append(inn_response.get('inn'))
     #проверка по списку Кандидатов
     candidates_response = candidates()
