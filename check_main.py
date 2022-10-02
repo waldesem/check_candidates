@@ -1,4 +1,3 @@
-import csv
 import datetime as dt
 import httpx
 import openpyxl
@@ -8,6 +7,7 @@ import menu_upload
 
 response_check = None
 response_candidates = None
+response_disqual = None
 
 
 def check():
@@ -54,11 +54,11 @@ def check():
         flag = False
         for cell in col_range:
             for c in cell:
-                if str(c.value).strip() == menu_upload.lst_ank[2].strip():
+                if str(c.value).strip() == menu_upload.anketa_values[2].strip():
                     row_num = c.row
                     birthday = ws['C' + str(row_num)].value
                     birthday = dt.datetime.strftime(birthday, '%d.%m.%Y')
-                    if birthday == menu_upload.lst_ank[4]:
+                    if birthday == menu_upload.anketa_values[4]:
                         response_candidates = 'Найдены полные совпадения в списке Кандидатов по ФИО и дате рождения'
                         flag = True
                         break
@@ -73,16 +73,25 @@ def check():
 
     # проверка по списку дисквалифицированных
     def disqualified():
-        # file = r'\\cronosx1\New folder\УВБ\Отдел корпоративной защиты\Кандидаты\Кандидаты.xlsm'
-        file_csv = r'/home/semenenko/MyProjects/Python/Staff_check/DB_check/data-18092022-structure-24062015.csv'
-        search_for = str(menu_upload.lst_ank[2]) + ';' + str(menu_upload.lst_ank[3])
-        with open(file_csv) as fc:
-            reader = csv.reader(fc)
-            for line in reader:
-                if search_for in line:
-                    response_disqual = 'Найден в списке дисквалифицированных лиц'
-                else:
-                    response_disqual = 'Отсутствует в списке дисквалифицированных лиц'
+        fio = str(menu_upload.anketa_values[2]).upper()
+        dr = str(menu_upload.anketa_values[3])
+        global response_disqual
+        try:
+            sqlite_connection = sqlite3.connect('/home/semenenko/MyProjects/Python/Staff_check/DB_check/disqual_db.db')
+            cursor_obj = sqlite_connection.cursor()
+            cursor_obj.execute("SELECT * FROM disqual_fns WHERE G2 like " + "'" + fio + "'" 
+                                + ' and G3 like ' + "'" + dr + "'")
+            record = cursor_obj.fetchall()
+            if len(record) != 0:
+                response_disqual = 'Найден в списке дисквалифицированных лиц'
+            else:
+                response_disqual = 'Отсутствует в списке дисквалифицированных лиц'
+            cursor_obj.close()
+        except sqlite3.Error as error:
+            print("Ошибка при подключении к sqlite", error)
+        finally:
+            if sqlite_connection:
+                sqlite_connection.close()
         return response_disqual
 
     # проверка по списку паспортов в БД
@@ -91,7 +100,7 @@ def check():
             sqlite_connection = sqlite3.connect('/home/semenenko/Загрузки/passportDB.db')
             cursor_obj = sqlite_connection.cursor()
             cursor_obj.execute('SELECT * FROM list_of_expired_passports WHERE PASSP_SERIES = ' + str(
-                menu_upload.lst_ank[7]) + ' and PASSP_NUMBER = ' + str(menu_upload.lst_ank[8]))
+                menu_upload.anketa_values[7]) + ' and PASSP_NUMBER = ' + str(menu_upload.anketa_values[8]))
             record = cursor_obj.fetchall()
             if len(record) != 0:
                 passport_response = "Найден в списке недействительных паспортов"
@@ -109,18 +118,18 @@ def check():
     global response_check
     response_check = []
     # проверка самозанятого
-    npd_response = check_npd_status(menu_upload.lst_ank[11])
+    npd_response = check_npd_status(menu_upload.anketa_values[11])
     response_check.append(npd_response.get('message'))
     # проверка инн
     document = {'passport_foreign': '10', 'residence_permit': '12', 'passport_russia': '21'}
     inn_response = suggest(
-        surname=menu_upload.lst_ank[2].split()[0],
-        name=menu_upload.lst_ank[2].split()[1],
-        patronymic=menu_upload.lst_ank[2].split()[2],
-        birthdate=menu_upload.lst_ank[4],
+        surname=menu_upload.anketa_values[2].split()[0],
+        name=menu_upload.anketa_values[2].split()[1],
+        patronymic=menu_upload.anketa_values[2].split()[2],
+        birthdate=menu_upload.anketa_values[4],
         doctype=document.get('passport_russia'),
-        docnumber=menu_upload.lst_ank[7][:2] + ' ' + menu_upload.lst_ank[7][2:] + ' ' + menu_upload.lst_ank[8],
-        docdate=menu_upload.lst_ank[9],
+        docnumber=menu_upload.anketa_values[7][:2] + ' ' + menu_upload.anketa_values[7][2:] + ' ' + menu_upload.anketa_values[8],
+        docdate=menu_upload.anketa_values[9],
     )
     # if __name__ == "__main__":
     response_check.append(inn_response.get('inn'))

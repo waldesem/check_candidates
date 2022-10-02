@@ -1,10 +1,10 @@
 # графический интерфейс для проверки кандидатов на работу
 from tkinter import Tk, Label, Menu, ttk
-
 import about_me
 import check_main
 import menu_download
 import menu_upload
+import login
 
 
 class MainApp:
@@ -45,15 +45,8 @@ class MainApp:
             self.master.config(menu=self.menu)
 
         # создаем название виджетов на вкладке Анкета
-        self.txt_ank = ['Должность', 'Подразделение', 'Фамилия Имя Отчество', 'Предыдущее ФИО', 'Дата рождения',
-                        'Место рождения',
-                        'Гражданство', 'Серия паспорта', 'Номер паспорта', 'Дата выдачи', 'СНИЛС', 'ИНН',
-                        'Адрес регистрации',
-                        'Адрес проживания', 'Телефон', 'Электронная  почта', 'Образование', 'Период работы',
-                        'Место работы',
-                        'Период работы', 'Место работы', 'Период работы', 'Место работы']
-        for i in range(len(self.txt_ank)):
-            Label(self.tab_anketa, text=f"{self.txt_ank[i]}", font=('Arial', 10), width=20, anchor='w',
+        for i in range(len(menu_upload.anketa_labeles)):
+            Label(self.tab_anketa, text=f"{menu_upload.anketa_labeles[i]}", font=('Arial', 10), width=20, anchor='w',
                   padx=8, pady=5).grid(sticky="w", column=0, row=i)
 
         # создаем название виджетов на вкладке результатов проверки
@@ -78,8 +71,8 @@ class MainApp:
             Label(self.tab_check, text=self.response_all[m], font=('Arial', 10), width=100, anchor='w',
                   padx=8, pady=5).grid(sticky="w", column=1, row=m)
 
-
 if __name__ == "__main__":
-    root = Tk()
-    app = MainApp(root)
-    root.mainloop()
+    if login.auth is True:
+        root = Tk()
+        app = MainApp(root)
+        root.mainloop()

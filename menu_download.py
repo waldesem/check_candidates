@@ -12,17 +12,17 @@ def download_file():
     wb = openpyxl.load_workbook(r'/home/semenenko/MyProjects/Python/Staff_check/DB_check/Заключение.xlsm')
     ws = wb['Заключение']
     # анкетные данные
-    ws['C4'] = menu_upload.lst_ank[0]
-    ws['C5'] = menu_upload.lst_ank[1]
-    ws['C6'] = menu_upload.lst_ank[2]
-    ws['C7'] = menu_upload.lst_ank[4]
+    ws['C4'] = menu_upload.anketa_values[0]
+    ws['C5'] = menu_upload.anketa_values[1]
+    ws['C6'] = menu_upload.anketa_values[2]
+    ws['C7'] = menu_upload.anketa_values[4]
     # 'Результаты проверки по местам работы'
-    ws['A9'] = menu_upload.lst_ank[-6]
-    ws['C9'] = menu_upload.lst_ank[-5]
-    ws['A10'] = menu_upload.lst_ank[-4]
-    ws['C10'] = menu_upload.lst_ank[-3]
-    ws['A11'] = menu_upload.lst_ank[-2]
-    ws['C11'] = menu_upload.lst_ank[-1]
+    ws['A9'] = menu_upload.anketa_values[-6]
+    ws['C9'] = menu_upload.anketa_values[-5]
+    ws['A10'] = menu_upload.anketa_values[-4]
+    ws['C10'] = menu_upload.anketa_values[-3]
+    ws['A11'] = menu_upload.anketa_values[-2]
+    ws['C11'] = menu_upload.anketa_values[-1]
     # проверка паспорт
     ws['C13'] = check_main.response_check[4]
     # 'Проверка статуса самозанятого'
@@ -39,7 +39,7 @@ def download_file():
     ws['C27'] = getpass.getuser()
 
     # создаем папку и сохраняем файл с новым именем
-    os.makedirs('/home/semenenko/MyProjects/' + menu_upload.lst_ank[2], exist_ok=True)
-    wb.save('/home/semenenko/MyProjects/' + menu_upload.lst_ank[2] + '/' + 'Заключение ' +
-            menu_upload.lst_ank[2] + '-' + menu_upload.lst_ank[4] + '.xlsx')
+    os.makedirs('/home/semenenko/MyProjects/' + menu_upload.anketa_values[2], exist_ok=True)
+    wb.save('/home/semenenko/MyProjects/' + menu_upload.anketa_values[2] + '/' + 'Заключение ' +
+            menu_upload.anketa_values[2] + '-' + menu_upload.anketa_values[4] + '.xlsx')
     mb.showinfo(title="Результат проверки", message="Создана целевая папка и файл заключения")
