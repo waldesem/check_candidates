@@ -13,10 +13,11 @@ def validateLogin():
         cursor_obj.execute("SELECT * FROM user_db WHERE login like " + "'" + usr + "'" + ' and password like ' 
                             + "'" + passwd + "'")
         record = cursor_obj.fetchall()
-        if len(record) != 0:
-            auth = True
-            window.destroy()
-        else:
+        try:
+            if record[0][0] == usr and record[0][1] == passwd:
+                auth = True
+                window.destroy()
+        except IndexError:
             mb.showinfo(title="Ошибка", message="Неверный логин или пароль")
         cursor_obj.close()
     except sqlite3.Error as error:
