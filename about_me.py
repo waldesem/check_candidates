@@ -1,6 +1,5 @@
 from tkinter import Tk, Label
 
-
 # клик по кнопке "О программе"
 def about_program():
     small_window = Tk()
