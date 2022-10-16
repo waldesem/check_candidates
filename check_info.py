@@ -76,8 +76,8 @@ def check():
     fio = files_check.anketa_values[2]
     dr = files_check.anketa_values[4]
     #dr = dt.datetime.strftime(birthday, '%d.%m.%Y')
-    connect = '/home/semenenko/MyProjects/Python/Staff_check/DB_check/kandidates.db'
-    query = "SELECT * FROM Candidates WHERE ФИО like " + "'" + fio + "'" + ' and Датарождения like ' + "'" + dr + "'"
+    connect = '/home/semenenko/MyProjects/Python/Staff_check/DB_check/candidates_db.db'
+    query = "SELECT * FROM candidates WHERE full_name like " + "'" + fio + "'" + ' and birthday like ' + "'" + dr + "'"
     resp = 'Найдены полные совпадения в Базе данных по ФИО и дате рождения'
     noresp = 'Не найдены совпадения в списке Базе данных (возможно совпадение по ФИО)'
     candidates_response = db_response(connect, query, resp, noresp)

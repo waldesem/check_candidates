@@ -1,5 +1,5 @@
 import sqlite3
-from tkinter import Tk, Button, Label, StringVar, Entry, ttk, Menu, messagebox as mb
+from tkinter import Tk, Button, Label, StringVar, Entry, ttk, Menu, messagebox
 import files_check
 import check_info
 import sqlite3
@@ -64,39 +64,39 @@ def db_response():
     global record_db
     global column_names
     try:
-        sqlite_connection = sqlite3.connect('/home/semenenko/MyProjects/Python/Staff_check/DB_check/kandidates.db')
+        sqlite_connection = sqlite3.connect('/home/semenenko/MyProjects/Python/Staff_check/DB_check/candidates_db.db')
         cursor_obj = sqlite_connection.cursor()
-        cursor_obj.execute("SELECT * FROM Candidates WHERE ФИО like " + "'" + fio_search.get() + 
-                            "'" + ' and Датарождения like ' + "'" + dr_search.get() + "'")
+        cursor_obj.execute("SELECT * FROM candidates WHERE full_name like "+"'"+fio_search.get()+
+                            "'"+' and birthday like '+"'"+dr_search.get()+"'")
         # преобразование полученных записей из кортежа в список
         record_db = [i for i in cursor_obj.fetchall()[0]]
         # получаем название полей в таблице в виде списка
         cursor_obj.execute('PRAGMA table_info("Candidates")')
         column_names = [i[1] for i in cursor_obj.fetchall()]
         try:
-            if record_db[1] == fio_search.get() and record_db[2] == dr_search.get():
-                for i in range(3):
+            if len(record_db):
+                for i in range(17):
                     # создаем надписи на вкладке базы данных по итогам поиска
                     mw.create_labeles(tab_db,column_names[i], 40, 'w', 5, 5, i+2, 0)
                     mw.create_labeles(tab_db,record_db[i], 60, 'w', 5, 5, i+2, 1)
         except IndexError:
-            mb.showinfo(title="Внимание", message="Запись не найдена")
+            mw.create_labeles(tab_db,"Внимание", 40, 'w', 5, 5, 3, 0)
+            mw.create_labeles(tab_db,"Запись не найдена", 60, 'w', 5, 5, 3, 1)
         cursor_obj.close()
     except sqlite3.Error as error:
-        mb.showinfo(title = "Внимание", message = "Ошибка при подключении к sqlite" + error)
+        print('Ошибка при подключении к sqlite', error)
     finally:
         if sqlite_connection:
             sqlite_connection.close()
-    return record_db
 
-# выгрузка информации по запросу
+# выгрузка информации из БД по запросу
 def take_info():
     query_file = "/home/semenenko/Загрузки/yourfile.txt"
     with open(query_file, 'w') as f:
         for i in range(len(column_names)):
             f.write(str(column_names[i]) + '\t')
             f.write(str(record_db[i]) + '\n')
-        mb.showinfo(title = "Успех", message = "Запись выгружена в файл")
+        messagebox.showinfo(title = "Успех", message = "Запись выгружена в файл")
     webbrowser.open(query_file)
 
 # клик по кнопке "О программе"
