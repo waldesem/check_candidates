@@ -1,22 +1,12 @@
-from tkinter import Toplevel, Label
+from tkinter import Toplevel
+from app_window import MainWindow
 
-class AboutWin(Toplevel):
+
+class AboutWin(Toplevel, MainWindow):
     def __init__(self):
         super().__init__()
         self.title('О программе')
         self.geometry('360x180')
-    
-    def create_labeles(self, text, font, width, anchor, padx, pady, row, column):
-        self.text = text
-        self.font = font
-        self.width = width
-        self.anchor = anchor
-        self.padx = padx
-        self.pady = pady
-        self.row = row
-        self.column = column
-        Label(self, text=text, font=font, width=width, anchor=anchor, 
-                                    padx=padx, pady=pady).grid(row=row, column=column)
 
 # клик по кнопке "О программе"
 def about_program():

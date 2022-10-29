@@ -1,74 +1,28 @@
-from tkinter import Tk, ttk, Menu, Button, Label, StringVar, Entry, messagebox, Frame, Scrollbar
+from tkinter import Tk, ttk, Menu, StringVar, messagebox, Frame, Scrollbar, Text
+from app_window import MainWindow
 from login_app import user_login
 from about_app import about_program
-from check_app import response_db
+from check_app import check, upload, db_add
+from database_app import response_db, update_db
 from docx import Document
-import check_app
 import subprocess
-
-
-class MainWindow:
-    def __init__(self, master, title, geometry):
-        self.master = master
-        self.title = title
-        self.geometry = geometry
-        master.title(title)
-        master.geometry(geometry)
-    
-    def create_labeles(self, text, font, width, anchor, padx, pady, row, column):
-        self.text = text
-        self.font = font
-        self.width = width
-        self.anchor = anchor
-        self.padx = padx
-        self.pady = pady
-        self.row = row
-        self.column = column
-        Label(self, text=text, font=font, width=width, anchor=anchor, 
-                                    padx=padx, pady=pady).grid(row=row, column=column)
-
-    def create_buttons(self, text, command, row, column):
-        self.textvariable = text
-        self.command = command
-        self.row = row
-        self.column = column
-        Button(self, text=text, command=command).grid(row=row, column=column)
-
-    def create_entries(self, textvariable, width, show, row, column):
-        self.textvariable = textvariable
-        self.width = width
-        self.show = show
-        self.row = row
-        self.column = column
-        Entry(self, textvariable=textvariable, width=width, show=show).grid(row=row, column=column)  
-    
-    def create_menu(self, label, command, menu):
-        self.menu = menu
-        self.label = label
-        self.command = command
-        menu.add_command(label=label, font=('Arial', 10), command=command)
-        self.config(menu=menu)
-
-# запуск по кнопке войти в систему
-def click_login():
-    user_login()
 
 # запуск по кнопке "Загрузить анкету"
 def click_upload():
     # анкетные данные на вкладке Анкета
-    anketa_response = check_app.upload()
+    anketa_response = upload()
     for k in range(len(anketa_response)):
         mw.create_labeles(mw.tab_anketa, anketa_response[k], ('Arial', 10), 100, 'w', 8, 5, k, 1)   
 
 # запуск по кнопке "Проверить кандидата"
 def click_check():
-    response_all = check_app.check()
+    response_all = check()
     for m in range(len(response_all)):
         mw.create_labeles(mw.tab_check, response_all[m], ('Arial', 10), 100, 'w', 8, 5, m, 1)
 
 # клик по кнопке загрузить в БД
 def upload_db():
-    db_upload = check_app.db_add()
+    db_upload = db_add()
     if len(db_upload):
         messagebox.showinfo(title="Внимание", message="Ошибка записи. Проверьте БД.")
     else:
@@ -78,29 +32,34 @@ def upload_db():
 def db_search():
     connect = '/home/semenenko/MyProjects/Python/Staff_check/DB_check/candidates_db.db'
     query = ("SELECT * FROM candidates WHERE full_name like "+"'"+fio_search.get()+"'"+' and birthday like '+"'"+dr_search.get()+"'")
-    #query2 = ('PRAGMA table_info("Candidates")')
     try:
         search_query = [i for i in response_db(connect, query)]
+        # удаляем старые записи в окне таблицы
         for i in tree.get_children():
             tree.delete(i)
+        # записываем найденные записи
         for i in range(len(search_query)):
             tree.insert('', 'end', values=search_query[i])
-        #db_col = [i[1] for i in response_db(connect, query2)]
     except IndexError:
         messagebox.showinfo(title="Результат проверки", message="Запись в БД не найдена")
-    #search_query.extend([db_col, db_row])
     return search_query
 
-# клик по кнопке Выгрузка информации из БД
-def take_info():
-    file_query = '/home/semenenko/Загрузки/yourfile.docx'
-    document = Document()
-    table = document.add_table(rows=len(search_query), cols=1)
-    table.style = 'Table Grid'
-    for i in range(len(search_query)):
-        table.rows[i].cells[0].text = str(search_query[i])
-    document.save(file_query)
-    subprocess.call(["xdg-open", file_query])
+# клик по кнопке поиск в БД записей по SQL-запросу
+def db_search_where():
+    connect = '/home/semenenko/MyProjects/Python/Staff_check/DB_check/candidates_db.db'
+    query = (str(sql_search.get()))
+    print(query)
+    try:
+        search_query = [i for i in response_db(connect, query)]
+        # удаляем старые записи в окне таблицы
+        for i in tree.get_children():
+            tree.delete(i)
+        # записываем найденные записи
+        for i in range(len(search_query)):
+            tree.insert('', 'end', values=search_query[i])
+    except IndexError:
+        messagebox.showinfo(title="Результат проверки", message="Запись в БД не найдена")
+    return search_query
 
 # общий запрос в БД перед стартом программы
 def start_query():
@@ -112,27 +71,47 @@ def start_query():
         messagebox.showinfo(title="Ошибка", message="БД не подключена")
     return search_query
 
-# клик по кнопке открыть БД
-def open_db():
-    pass
+# выбор строки в таблице базы данных и показ в текстовом поле
+selected_people = ""
+def item_selected(event):
+    for selected_item in tree.selection():
+        item = tree.item(selected_item)
+        global selected_people
+        selected_people = '\n'.join(map(str, item["values"]))
+    editor.delete("1.0", 'end')
+    editor.insert("1.0", selected_people)
+    return(selected_people)
 
-# клик по кнопке "О программе"
-def about_pro():
-    about_program()
+# клик по кнопке Выгрузка информации из БД
+def take_info():
+    file_query = '/home/semenenko/Загрузки/yourfile.docx'
+    document = Document()
+    # создаем таблицу Word
+    table = document.add_table(rows=len(columns), cols=2)
+    table.style = 'Table Grid'
+    for i in range(len(columns)):
+        table.rows[i].cells[0].text = columns[i]
+        table.rows[i].cells[1].text = selected_people.split('\n')[i]
+    document.save(file_query)
+    subprocess.call(["xdg-open", file_query])
+
+def change_db():
+    update_db(columns, selected_people.split('\n'))
 
 # главное окно приложения
 if __name__ == '__main__':
     root = Tk()
     mw = MainWindow
-    mw(root,'Кадровая безопасность', '1080x880')
-    # mw(root,'Кадровая безопасность', '1920x1080')
+    mw(root,'Кадровая безопасность', '960x780')
     # окно сообщений
     root.option_add('*Dialog.msg.font', 'Arial 10')   
+    root.columnconfigure(0, weight=1)
+    root.rowconfigure(0, weight=1)
 
     # создаем виджеты и команды в меню
     mw.menu = Menu(root)
-    mw.menu_label_lst = ['Войти в систему', 'Загрузить анкету', 'Начать проверку', 'Загрузить в БД', 'Открыть БД', 'О программе']
-    mw.command_lst = [click_login, click_upload, click_check, upload_db, open_db, about_pro]
+    mw.menu_label_lst = ['Войти в систему', 'Загрузить анкету', 'Начать проверку', 'Загрузить в БД', 'Изменить БД', 'О программе']
+    mw.command_lst = [user_login, click_upload, click_check, upload_db, change_db, about_program]
     for n in range(len(mw.command_lst)):
         mw.create_menu(root, mw.menu_label_lst[n], mw.command_lst[n], mw.menu)
 
@@ -163,6 +142,8 @@ if __name__ == '__main__':
     # вкладка базы данных
     mw.tab_db = ttk.Frame(mw.tab_control)
     mw.tab_control.add(mw.tab_db, text='База данных')
+    for i in range (3):
+        mw.tab_db.columnconfigure(i, weight=1)
 
     #создаем название видежетов на вкладке База данных
     mw.txt_search = ['Фамилия Имя Отчество', 'Дата рождения']
@@ -176,38 +157,62 @@ if __name__ == '__main__':
     mw.create_entries(mw.tab_db, dr_search, 40, None, 1, 1)
     mw.create_labeles(mw.tab_db, 'Найти по условию', ('Arial', 10), 40, 'center', 10, 10, 0, 2)
     mw.create_buttons(mw.tab_db, "Поиск", db_search, 1, 2)
-    # поиск по sql запросу (функция не прописана)
-    mw.create_labeles(mw.tab_db, 'Или запрос в формате SQL', ('Arial', 10), 30, 'w', 10, 10, 2, 0)
+    # поиск по sql запросу
+    mw.create_labeles(mw.tab_db, 'Запрос в формате SQL', ('Arial', 10), 30, 'w', 10, 10, 2, 0)
     sql_search = StringVar()
     sql_search.set("Select * from candidates where...")
     mw.create_entries(mw.tab_db, sql_search, 40, None, 2, 1)
-    mw.create_buttons(mw.tab_db, "SQL запрос", 'db_search', 2, 2)
+    mw.create_buttons(mw.tab_db, "SQL запрос", db_search_where, 2, 2)
+    mw.create_buttons(mw.tab_db, "Выгрузить данные", take_info, 3, 2)
     mw.create_labeles(mw.tab_db, 'Результаты поиска', ('Arial', 10), 30, 'w', 10, 10, 3, 1)
-    mw.create_buttons(mw.tab_db, "Выгрузить данные", 'take_info', 6, 2)
-
-    # таблица записей из БД
+   
+    # фрейм и таблица записей из БД
     frame_table = Frame(mw.tab_db)
-    frame_table.grid(row=4, column=0, columnspan=3, rowspan=4, pady=20, padx=5)
-    columns = ['id','staff', 'department', 'full_name', 'last_name', 'birthday', 'birth_place', 'country'] #'serie_passport', 'number_passport', 'date_given', 'snils', 'inn', 'reg_address', 'live_address', 'phone', 'email', 'education', 'first_time_work', 'first_place_work', 'check_first_place', 'second_time_work', 'second_place_work', 'check_second_place', 'third_time_work', 'third_place_work', 'check_third_place', 'check_passport', 'check_terror', 'check_selfwork', 'check_inn', 'check_debt', 'check_bancrupcy', 'check_bki', 'check_affilate', 'check_disqual', 'check_db', 'check_internet', 'check_cronos', 'check_cross', 'resume', 'date_check', 'officer', 'url']
+    frame_table.grid(row=4, column=0, columnspan=4, rowspan=1, pady=10, padx=20)
+    columns = ['id', 'Должность', 'Подразделение', 'Фамилия Имя Отчество', 'Предыдущее ФИО', 'Дата рождения', 'Место рождения', 'Гражданство', 'Серия паспорта', 'Номер паспорта', 'Дата выдачи', 'СНИЛС', 'ИНН', 'Адрес регистрации', 'Адрес проживания', 'Телефон', 'Электронная  почта', 'Образование', 'Период работы на 1-м МР', '1-е место работы', 'Проверка 1-го места работы', 'Период работы на 2-м МР', '2-е место работы', 'Проверка 2-го места работы', 'Период работы на 3-м МР', '3-е место работы', 'Проверка 3-го места работы', 'Проверка паспорта', 'Проверка по списку террористов', 'Проверка на самозанятого', 'Проверка ИНН', 'Проверка долгов', 'Проверка банкротства', 'Проверка по БКИ', 'Проверка аффилированности', 'Проверка дискваилфикации', 'Проверка по БД', 'Проверка Internet', 'Проверка Сronos', 'Проверка Cross', 'Результат', 'Дата проверки', 'Сотрудник', 'Ссылка']
+    for col in range(len(columns)):
+        frame_table.columnconfigure(col, weight=1)
+
     # настройки скролбаров
-    x_scrollbar = Scrollbar(mw.tab_db, orient='horizontal')
-    x_scrollbar.grid(row=5, column=0, columnspan=3, padx=10, sticky='N'+'S'+'E'+'W')
-    y_scrollbar = Scrollbar(mw.tab_db, orient='vertical')
-    y_scrollbar.grid(row=4, column=4, sticky='N'+'S'+'E'+'W')
-    # размещенение столбцов, строк  и др.
-    tree = ttk.Treeview(mw.tab_db, columns=columns, height=10, show="headings", xscrollcommand=x_scrollbar.set, yscrollcommand=y_scrollbar.set)
-    tree.grid(row=4, column=0, columnspan=3, padx=10, sticky='N'+'S'+'E'+'W')
-    # использование скролбаров
+    x_scrollbar = Scrollbar(frame_table, orient='horizontal')
+    x_scrollbar.grid(row=1, column=0, columnspan=3, sticky='E'+'W')
+    y_scrollbar = Scrollbar(frame_table, orient='vertical')
+    y_scrollbar.grid(row=0, column=3, sticky='N'+'S')
+    
+    # размещение столбцов, строк  и др.
+    tree = ttk.Treeview(frame_table, columns=columns, height=5, show="headings", displaycolumns= ['Должность', 'Подразделение', 'Фамилия Имя Отчество', 'Дата рождения', 'Результат', 'Дата проверки'], xscrollcommand=x_scrollbar.set,yscrollcommand=y_scrollbar.set)
+    tree.grid(row=0, column=0, columnspan=3, sticky='E'+'W')
     x_scrollbar['command'] = tree.xview
     y_scrollbar['command'] = tree.yview
+    
     # настройка заголовков
     for col in tree['columns']:
-            tree.heading(col, text=f"{col}", anchor='center')
-            tree.column(col, anchor='center', width=180)
+        tree.heading(col, text=f"{col}", anchor='center')
+        tree.column(col, anchor='center', width=160)
+   
     # загрузка записей по умолчанию на старте программы
     search_query = start_query()
     for i in range(len(search_query)):
         tree.insert('', 'end', values=search_query[i])
+
+    # выбор строки в таблице результатов
+    tree.bind("<<TreeviewSelect>>", item_selected)
+    
+    # фрейм и текстовое поле для выбранной записи из таблицы БД
+    frame_select = Frame(mw.tab_db)
+    frame_select.grid(row=5, column=0, columnspan=4, rowspan=1, pady=10, padx=20)        
+    
+    # параметры текстового поля
+    editor = Text(frame_select, height=20, wrap = "word")
+    editor.grid(column = 0, row = 0, sticky = 'E'+'W')
+    
+    #  скроллбары текстового поля
+    ys = ttk.Scrollbar(frame_select, orient = "vertical", command = editor.yview)
+    ys.grid(column = 3, row = 0, sticky = 'N'+'S')
+    xs = ttk.Scrollbar(frame_select, orient = "horizontal", command = editor.xview)
+    xs.grid(column = 0, row = 1, sticky = 'E'+'W')
+    editor["yscrollcommand"] = ys.set
+    editor["xscrollcommand"] = xs.set
 
     # запуск главного окна
     root.mainloop()
