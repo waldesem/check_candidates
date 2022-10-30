@@ -1,8 +1,7 @@
-from tkinter import Toplevel, StringVar, Frame, Scrollbar
+from tkinter import Toplevel, Label, Frame, Text, ttk, messagebox
 from app_window import MainWindow
 import sqlite3
 
-# columns = ['id', 'Должность', 'Подразделение', 'Фамилия Имя Отчество', 'Предыдущее ФИО', 'Дата рождения', 'Место рождения', 'Гражданство', 'Серия паспорта', 'Номер паспорта', 'Дата выдачи', 'СНИЛС', 'ИНН', 'Адрес регистрации', 'Адрес проживания', 'Телефон', 'Электронная  почта', 'Образование', 'Период работы на 1-м МР', '1-е место работы', 'Проверка 1-го места работы', 'Период работы на 2-м МР', '2-е место работы', 'Проверка 2-го места работы', 'Период работы на 3-м МР', '3-е место работы', 'Проверка 3-го места работы', 'Проверка паспорта', 'Проверка по списку террористов', 'Проверка на самозанятого', 'Проверка ИНН', 'Проверка долгов', 'Проверка банкротства', 'Проверка по БКИ', 'Проверка аффилированности', 'Проверка дискваилфикации', 'Проверка по БД', 'Проверка Internet', 'Проверка Сronos', 'Проверка Cross', 'Результат', 'Дата проверки', 'Сотрудник', 'Ссылка']
 
 # запрос в базу данных
 def response_db(db, query):
@@ -15,45 +14,69 @@ def response_db(db, query):
         print('Ошибка', error)       
     return record_db
 
-def change_value():
-    response_db(db = '/home/semenenko/MyProjects/Python/Staff_check/DB_check/candidates_db.db', query ="UPDATE candidates SET staff = '"+staff_val+"' where id = '"+id_val+"'")
+sql_col = ["id", "staff", "department", "full_name", "last_name", "birthday", "birth_place", "country", "serie_passport", "number_passport", "date_given", "snils", "inn", "reg_address", "live_address", "phone", "email", "education", "first_time_work", "first_place_work", "check_first_place", "second_time_work", "second_place_work", "check_second_place", "third_time_work", "third_place_work", "check_third_place", "check_passport", "check_terror", "check_selfwork", "check_inn", "check_debt", "check_bancrupcy", "check_bki", "check_affilate", "check_disqual", "check_db", "check_internet", "check_cronos", "check_cross", "resume", "date_check", "officer", "url"]
+
 
 # запустить окно редактирования базы данных
 def update_db(columns, selected_people):
-    print(selected_people)
+    
+    sql_col_dict = dict(zip(columns, sql_col))
+    col_select = dict(zip(columns, selected_people))
+
+    # обновление записей в БД
+    def change_value():
+        resp = response_db(db = '/home/semenenko/MyProjects/Python/Staff_check/DB_check/candidates_db.db', query ="UPDATE candidates SET '"+sql_col_dict[idx]+ "' = '"+editor.get("1.0", "end").strip()+"' where id = '"+selected_people[0]+"'")
+        if len(resp):
+            messagebox.showinfo(title="Ошибка", message="Проверьте данные", parent=master)
+        else:
+            messagebox.showinfo(title="Успех", message="Запись обновлена", parent=master)
+    
+    # получение данных из комбобокс
+    def selected(event):
+        global idx
+        # получаем выделенный элемент
+        selection = combobox.get()
+        for key in sql_col_dict:
+            if key == selection:
+                label["text"] = f"Вы выбрали изменить: {sql_col_dict[key]}"
+                editor.delete("1.0", 'end')
+                editor.insert("1.0", col_select[key])
+                idx = key
+        return idx
+
+    # старт окна базы данных
     master = Toplevel()
     dw = MainWindow
-    dw(master,'База данных', '960x780')
-    master.rowconfigure(0, weight=1)
+    dw(master,'База данных', '760x640')
+    master.columnconfigure(0, weight=1)
     
+    # создаем фрейм для размещения элементов
     frame_db = Frame(master)
-    frame_db.grid(row=0, column=0, columnspan=4, rowspan=1, pady=10, padx=10)        
-
-    #vert_s = Scrollbar(frame_db, orient = "vertical")
-    #vert_s.grid(column = 3, rowspan=len(columns), row = 0, sticky = 'N'+'S')
-    #vert_s.config(command=frame_db.yview)
-
-    title_text = ['Название поля', 'Значение', 'Изменить значение в БД']
-    for i in range(len(title_text)):
-        dw.create_labeles(frame_db, f"{title_text[i]}", ('Arial', 10), 30, 'center', 10, 5, 0, i)
+    frame_db.grid(row=0, column=0, columnspan=2, rowspan=1, pady=10, padx=10)        
     
-    for i in range(len(columns)):
-        dw.create_labeles(frame_db, f"{columns[i]}", ('Arial', 10), 30, 'w', 10, 5, i+1, 0)
+    # создаем динамический лейбл для информации
+    label = Label(frame_db)
+    label.grid(row=0, column=0, pady=10, padx=10)
     
-    id_val = StringVar()
-    id_val.set(selected_people[0])
-    dw.create_entries(frame_db, id_val, 40, None, 1, 1)
+    # создаем комбобокс
+    combobox = ttk.Combobox(frame_db, values=columns, state="readonly")
+    combobox.grid(row=1, column=0, pady=10, padx=10)
+    combobox.bind("<<ComboboxSelected>>", selected)
     
-    staff_val = StringVar()
-    staff_val.set(selected_people[1])
-    dw.create_entries(frame_db, staff_val, 40, None, 2, 1)
-    dw.create_buttons(frame_db, "Обновить", change_value, 2, 2)
+    # создаем текстовое поле
+    editor = Text(frame_db, wrap = "word")
+    editor.grid(column = 0, row = 2, sticky = 'N'+'S'+'E'+'W')
     
-    dept_val = StringVar()
-    dept_val.set(selected_people[2])
-    dw.create_entries(frame_db, dept_val, 40, None, 3, 1)
-    dw.create_buttons(frame_db, "Обновить", change_value, 3, 2)
+    # создаем  скроллбары
+    ys = ttk.Scrollbar(frame_db, orient = "vertical", command = editor.yview)
+    ys.grid(column = 1, row = 2, sticky = 'N'+'S')
+    xs = ttk.Scrollbar(frame_db, orient = "horizontal", command = editor.xview)
+    xs.grid(column = 0, row = 3, sticky = 'E'+'W')
+    editor["yscrollcommand"] = ys.set
+    editor["xscrollcommand"] = xs.set
+    
+    # создаем кнопку для обновления  информации в БД
+    dw.create_buttons(frame_db, "Обновить данные", change_value, 4, 0)
 
-
-
+    
 

@@ -66,6 +66,8 @@ def start_query():
     connect = '/home/semenenko/MyProjects/Python/Staff_check/DB_check/candidates_db.db'
     query = ("SELECT * FROM candidates ORDER BY date_check DESC LIMIT 10")
     try:
+        for i in tree.get_children():
+            tree.delete(i)
         search_query = [i for i in response_db(connect, query)]
     except IndexError:
         messagebox.showinfo(title="Ошибка", message="БД не подключена")
@@ -164,8 +166,10 @@ if __name__ == '__main__':
     mw.create_entries(mw.tab_db, sql_search, 40, None, 2, 1)
     mw.create_buttons(mw.tab_db, "SQL запрос", db_search_where, 2, 2)
     mw.create_buttons(mw.tab_db, "Выгрузить данные", take_info, 3, 2)
-    mw.create_labeles(mw.tab_db, 'Результаты поиска', ('Arial', 10), 30, 'w', 10, 10, 3, 1)
-   
+    mw.create_labeles(mw.tab_db, 'Результаты поиска', ('Arial', 10), 30, 'w', 10, 10, 3, 0)
+    mw.create_buttons(mw.tab_db, "Обновить данные", start_query, 3, 1)
+
+
     # фрейм и таблица записей из БД
     frame_table = Frame(mw.tab_db)
     frame_table.grid(row=4, column=0, columnspan=4, rowspan=1, pady=10, padx=20)
@@ -213,7 +217,7 @@ if __name__ == '__main__':
     xs.grid(column = 0, row = 1, sticky = 'E'+'W')
     editor["yscrollcommand"] = ys.set
     editor["xscrollcommand"] = xs.set
-
+    
     # запуск главного окна
     root.mainloop()
 
