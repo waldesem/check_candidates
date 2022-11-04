@@ -2,6 +2,12 @@ from tkinter import Toplevel, Label, Frame, Text, ttk, messagebox
 from app_window import MainWindow
 import sqlite3
 
+CONNECT = '/home/semenenko/MyProjects/Python/Staff_check/DB_check/candidates_db.db'
+
+COLS = ['id', 'Должность', 'Подразделение', 'Фамилия Имя Отчество', 'Предыдущее ФИО', 'Дата рождения', 'Место рождения', 'Гражданство', 'Серия паспорта', 'Номер паспорта', 'Дата выдачи', 'СНИЛС', 'ИНН', 'Адрес регистрации', 'Адрес проживания', 'Телефон', 'Электронная  почта', 'Образование', 'Период работы на 1-м МР', '1-е место работы', 'Период работы на 2-м МР', '2-е место работы', 'Период работы на 3-м МР', '3-е место работы', 'Проверка по местам работы', 'Проверка паспорта', 'Проверка по списку террористов', 'Проверка на самозанятого', 'Проверка ИНН', 'Проверка долгов', 'Проверка банкротства', 'Проверка по БКИ', 'Проверка аффилированности', 'Проверка дисквалификации', 'Проверка по БД', 'Проверка Internet', 'Проверка Сronos', 'Проверка Cros', 'Доп. информация', 'Результат', 'Дата проверки', 'Сотрудник', 'Ссылка']
+
+# название столбцов базы данных
+SQL = ["id", "staff", "department", "full_name", "last_name", "birthday", "birth_place", "country", "serie_passport", "number_passport", "date_given", "snils", "inn", "reg_address", "live_address", "phone", "email", "education", "first_time_work", "first_place_work", "second_time_work", "second_place_work", "third_time_work", "third_place_work", "check_work_place", "check_passport", "check_terror", "check_selfwork", "check_inn", "check_debt", "check_bancrupcy", "check_bki", "check_affilate", "check_disqual", "check_db", "check_internet", "check_cronos", "check_cross", "rand_info", "resume", "date_check", "officer", "url"]
 
 # запрос в базу данных
 def response_db(db, query):
@@ -9,23 +15,23 @@ def response_db(db, query):
         with sqlite3.connect(db) as con:
             cur = con.cursor()
             cur.execute(query)
-            record_db = cur.fetchall()
+            if 'INSERT' in query:
+                con.commit()
+            record_db = cur.fetchall()    
     except sqlite3.Error as error:
         print('Ошибка', error)       
     return record_db
 
-sql_col = ["id", "staff", "department", "full_name", "last_name", "birthday", "birth_place", "country", "serie_passport", "number_passport", "date_given", "snils", "inn", "reg_address", "live_address", "phone", "email", "education", "first_time_work", "first_place_work", "check_first_place", "second_time_work", "second_place_work", "check_second_place", "third_time_work", "third_place_work", "check_third_place", "check_passport", "check_terror", "check_selfwork", "check_inn", "check_debt", "check_bancrupcy", "check_bki", "check_affilate", "check_disqual", "check_db", "check_internet", "check_cronos", "check_cross", "resume", "date_check", "officer", "url"]
-
-
 # запустить окно редактирования базы данных
 def update_db(columns, selected_people):
-    
-    sql_col_dict = dict(zip(columns, sql_col))
+    # свзяываем данные колонок SQl БД с их русским названием и данными, которые передаются из выделенной строки таблицы
+    sql_col_dict = dict(zip(columns, SQL))
     col_select = dict(zip(columns, selected_people))
 
-    # обновление записей в БД
+    # изменение записей в БД
     def change_value():
-        resp = response_db(db = '/home/semenenko/MyProjects/Python/Staff_check/DB_check/candidates_db.db', query ="UPDATE candidates SET '"+sql_col_dict[idx]+ "' = '"+editor.get("1.0", "end").strip()+"' where id = '"+selected_people[0]+"'")
+        resp = response_db(db = '/home/semenenko/MyProjects/Python/Staff_check/DB_check/candidates_db.db', query =f"UPDATE candidates SET {sql_col_dict[idx]} = {editor.get('1.0', 'end').strip()} where id = {selected_people[0]}")
+
         if len(resp):
             messagebox.showinfo(title="Ошибка", message="Проверьте данные", parent=master)
         else:
@@ -34,14 +40,14 @@ def update_db(columns, selected_people):
     # получение данных из комбобокс
     def selected(event):
         global idx
-        # получаем выделенный элемент
+        # получаем выбранный элемент в лейбле показываем его SQl поле, в текстовом - содержание строки.
         selection = combobox.get()
         for key in sql_col_dict:
             if key == selection:
-                label["text"] = f"Вы выбрали изменить: {sql_col_dict[key]}"
+                label["text"] = f"Вы выбрали изменить запись в колонке: {sql_col_dict[key]}"
                 editor.delete("1.0", 'end')
                 editor.insert("1.0", col_select[key])
-                idx = key
+                idx = key  # индекс для передачи в SQL запрос на изменение значения.
         return idx
 
     # старт окна базы данных
